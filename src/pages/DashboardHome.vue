@@ -9,24 +9,24 @@
                 <div class="row">
                     <div class="col">
                         <h3>{{ $t("Up") }}</h3>
-                        <span class="num">{{ stats.up }}</span>
+                        <span class="num">{{ $root.stats.up }}</span>
                     </div>
                     <div class="col">
                         <h3>{{ $t("Down") }}</h3>
-                        <span class="num text-danger">{{ stats.down }}</span>
+                        <span class="num text-danger">{{ $root.stats.down }}</span>
                     </div>
                     <div class="col">
                         <h3>{{ $t("Unknown") }}</h3>
-                        <span class="num text-secondary">{{ stats.unknown }}</span>
+                        <span class="num text-secondary">{{ $root.stats.unknown }}</span>
                     </div>
                     <div class="col">
                         <h3>{{ $t("pauseDashboardHome") }}</h3>
-                        <span class="num text-secondary">{{ stats.pause }}</span>
+                        <span class="num text-secondary">{{ $root.stats.pause }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="shadow-box table-shadow-box" style="overflow-x: scroll;">
+            <div class="shadow-box table-shadow-box" style="overflow-x: hidden;">
                 <table class="table table-borderless table-hover">
                     <thead>
                         <tr>
@@ -57,6 +57,7 @@
                         v-model="page"
                         :records="importantHeartBeatList.length"
                         :per-page="perPage"
+                        :options="paginationConfig"
                     />
                 </div>
             </div>
@@ -81,46 +82,19 @@ export default {
             page: 1,
             perPage: 25,
             heartBeatList: [],
-        }
+            paginationConfig: {
+                hideCount: true,
+                chunksNavigation: "scroll",
+            },
+        };
     },
     computed: {
-        stats() {
-            let result = {
-                up: 0,
-                down: 0,
-                unknown: 0,
-                pause: 0,
-            };
-
-            for (let monitorID in this.$root.monitorList) {
-                let beat = this.$root.lastHeartbeatList[monitorID];
-                let monitor = this.$root.monitorList[monitorID]
-
-                if (monitor && ! monitor.active) {
-                    result.pause++;
-                } else if (beat) {
-                    if (beat.status === 1) {
-                        result.up++;
-                    } else if (beat.status === 0) {
-                        result.down++;
-                    } else if (beat.status === 2) {
-                        result.up++;
-                    } else {
-                        result.unknown++;
-                    }
-                } else {
-                    result.unknown++;
-                }
-            }
-
-            return result;
-        },
 
         importantHeartBeatList() {
             let result = [];
 
             for (let monitorID in this.$root.importantHeartbeatList) {
-                let list = this.$root.importantHeartbeatList[monitorID]
+                let list = this.$root.importantHeartbeatList[monitorID];
                 result = result.concat(list);
             }
 
@@ -128,7 +102,7 @@ export default {
                 let monitor = this.$root.monitorList[beat.monitorID];
 
                 if (monitor) {
-                    beat.name = monitor.name
+                    beat.name = monitor.name;
                 }
             }
 
@@ -155,7 +129,7 @@ export default {
             return this.heartBeatList.slice(startIndex, endIndex);
         },
     },
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -177,6 +151,11 @@ table {
 
     tr {
         transition: all ease-in-out 0.2ms;
+    }
+
+    @media (max-width: 550px) {
+        table-layout: fixed;
+        overflow-wrap: break-word;
     }
 }
 </style>

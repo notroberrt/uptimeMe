@@ -7,7 +7,7 @@ class Discord extends NotificationProvider {
     name = "discord";
 
     async send(notification, msg, monitorJSON = null, heartbeatJSON = null) {
-        let okMsg = "Sent Successfully. ";
+        let okMsg = "Sent Successfully.";
 
         try {
             const discordDisplayName = notification.discordUsername || "Uptime Kuma";
@@ -62,6 +62,11 @@ class Discord extends NotificationProvider {
                         ],
                     }],
                 }
+
+                if (notification.discordPrefixMessage) {
+                    discorddowndata.content = notification.discordPrefixMessage;
+                }
+
                 await axios.post(notification.discordWebhookUrl, discorddowndata)
                 return okMsg;
 
@@ -92,6 +97,11 @@ class Discord extends NotificationProvider {
                         ],
                     }],
                 }
+
+                if (notification.discordPrefixMessage) {
+                    discordupdata.content = notification.discordPrefixMessage;
+                }
+
                 await axios.post(notification.discordWebhookUrl, discordupdata)
                 return okMsg;
             }

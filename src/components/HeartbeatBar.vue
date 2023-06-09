@@ -25,6 +25,10 @@ export default {
             type: Number,
             required: true,
         },
+        heartbeatList: {
+            type: Array,
+            default: null,
+        }
     },
     data() {
         return {
@@ -38,8 +42,15 @@ export default {
     },
     computed: {
 
+        /**
+         * If heartbeatList is null, get it from $root.heartbeatList
+         */
         beatList() {
-            return this.$root.heartbeatList[this.monitorId]
+            if (this.heartbeatList === null) {
+                return this.$root.heartbeatList[this.monitorId];
+            } else {
+                return this.heartbeatList;
+            }
         },
 
         shortBeatList() {
@@ -118,8 +129,10 @@ export default {
         window.removeEventListener("resize", this.resize);
     },
     beforeMount() {
-        if (! (this.monitorId in this.$root.heartbeatList)) {
-            this.$root.heartbeatList[this.monitorId] = [];
+        if (this.heartbeatList === null) {
+            if (! (this.monitorId in this.$root.heartbeatList)) {
+                this.$root.heartbeatList[this.monitorId] = [];
+            }
         }
     },
 
@@ -154,7 +167,7 @@ export default {
         },
 
         getBeatTitle(beat) {
-            return `${this.$root.datetime(beat.time)} - ${beat.msg}`;
+            return `${this.$root.datetime(beat.time)}` + ((beat.msg) ? ` - ${beat.msg}` : ``);
         }
     },
 }
@@ -173,7 +186,7 @@ export default {
     .beat {
         display: inline-block;
         background-color: $primary;
-        border-radius: 50rem;
+        border-radius: $border-radius;
 
         &.empty {
             background-color: aliceblue;

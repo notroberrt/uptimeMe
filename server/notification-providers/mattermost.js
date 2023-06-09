@@ -7,7 +7,7 @@ class Mattermost extends NotificationProvider {
     name = "mattermost";
 
     async send(notification, msg, monitorJSON = null, heartbeatJSON = null) {
-        let okMsg = "Sent Successfully. ";
+        let okMsg = "Sent Successfully.";
         try {
             const mattermostUserName = notification.mattermostusername || "Uptime Kuma";
             // If heartbeatJSON is null, assume we're testing.
@@ -20,7 +20,7 @@ class Mattermost extends NotificationProvider {
                 return okMsg;
             }
 
-            const mattermostChannel = notification.mattermostchannel;
+            const mattermostChannel = notification.mattermostchannel.toLowerCase();
             const mattermostIconEmoji = notification.mattermosticonemo;
             const mattermostIconUrl = notification.mattermosticonurl;
 

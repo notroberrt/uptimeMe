@@ -1,8 +1,9 @@
 @import "vars.scss";
+@import "multiselect.scss";
 @import "node_modules/bootstrap/scss/bootstrap";
 
 #app {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, segoe ui, Roboto, helvetica neue, Arial, noto sans, sans-serif, apple color emoji, segoe ui emoji, segoe ui symbol, noto color emoji;
+    font-family: BlinkMacSystemFont, segoe ui, Roboto, helvetica neue, Arial, noto sans, sans-serif, apple color emoji, segoe ui emoji, segoe ui symbol, noto color emoji;
 }
 
 h1 {
@@ -11,6 +12,10 @@ h1 {
 
 h2 {
     font-size: 26px;
+}
+
+textarea.form-control {
+    border-radius: 19px;
 }
 
 ::-webkit-scrollbar {
@@ -87,6 +92,10 @@ h2 {
     }
 }
 
+.btn-dark {
+    background-color: #161B22;
+}
+
 @media (max-width: 550px) {
     .table-shadow-box {
         padding: 10px !important;
@@ -139,23 +148,40 @@ h2 {
     background-color: #090c10;
     color: $dark-font-color;
 
+    mark, .mark {
+        background-color: #b6ad86;
+    }
+
     &::-webkit-scrollbar-thumb, ::-webkit-scrollbar-thumb {
         background: $dark-border-color;
     }
 
     .shadow-box {
-        background-color: $dark-bg;
+        &:not(.alert) {
+            background-color: $dark-bg;
+        }
     }
 
     .form-check-input {
         background-color: $dark-bg2;
+        border-color: $dark-border-color;
+    }
+
+    .input-group-text {
+        background-color: #282f39;
+        border-color: $dark-border-color;
+        color: $dark-font-color;
+    }
+
+    .form-check-input:checked {
+        border-color: $primary; // Re-apply bootstrap border
     }
 
     .form-switch .form-check-input {
         background-color: #232f3b;
     }
 
-    a,
+    a:not(.btn),
     .table,
     .nav-link {
         color: $dark-font-color;
@@ -177,7 +203,12 @@ h2 {
         border-color: $dark-border-color;
     }
 
-    .table-hover > tbody > tr:hover {
+    .form-control:disabled, .form-control[readonly] {
+        background-color: #232f3b;
+        opacity: 1;
+    }
+
+    .table-hover > tbody > tr:hover > * {
         --bs-table-accent-bg: #070a10;
         color: $dark-font-color;
     }
@@ -231,28 +262,16 @@ h2 {
         color: $dark-font-color;
     }
 
-    // Multiselect
-    .multiselect__tags {
-        background-color: $dark-bg2;
-        border-color: $dark-border-color;
-    }
+    .monitor-list {
+        .item {
+            &:hover {
+                background-color: $dark-bg2;
+            }
 
-    .multiselect__input, .multiselect__single {
-        background-color: $dark-bg2;
-        color: $dark-font-color;
-    }
-
-    .multiselect__content-wrapper {
-        background-color: $dark-bg2;
-        border-color: $dark-border-color;
-    }
-
-    .multiselect--above .multiselect__content-wrapper {
-        border-color: $dark-border-color;
-    }
-
-    .multiselect__option--selected {
-        background-color: $dark-bg;
+            &.active {
+                background-color: $dark-bg2;
+            }
+        }
     }
 
     @media (max-width: 550px) {
@@ -268,6 +287,16 @@ h2 {
             }
         }
     }
+
+    .alert {
+        &.bg-info,
+        &.bg-warning,
+        &.bg-danger,
+        &.bg-light {
+            color: $dark-font-color2;
+        }
+    }
+
 }
 
 /*
@@ -288,3 +317,142 @@ h2 {
     transform: translateY(50px);
     opacity: 0;
 }
+
+.slide-fade-right-enter-active {
+    transition: all 0.2s $easing-in;
+}
+
+.slide-fade-right-leave-active {
+    transition: all 0.2s $easing-in;
+}
+
+.slide-fade-right-enter-from,
+.slide-fade-right-leave-to {
+    transform: translateX(50px);
+    opacity: 0;
+}
+
+.slide-fade-up-enter-active {
+    transition: all 0.2s $easing-in;
+}
+
+.slide-fade-up-leave-active {
+    transition: all 0.2s $easing-in;
+}
+
+.slide-fade-up-enter-from,
+.slide-fade-up-leave-to {
+    transform: translateY(-50px);
+    opacity: 0;
+}
+
+.monitor-list {
+    &.scrollbar {
+        overflow-y: auto;
+        height: calc(100% - 65px);
+    }
+
+    .item {
+        display: block;
+        text-decoration: none;
+        padding: 13px 15px 10px 15px;
+        border-radius: 10px;
+        transition: all ease-in-out 0.15s;
+
+        &.disabled {
+            opacity: 0.3;
+        }
+
+        .info {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        &:hover {
+            background-color: $highlight-white;
+        }
+
+        &.active {
+            background-color: #cdf8f4;
+        }
+        .tags {
+            // Removes margin to line up tags list with uptime percentage
+            margin-left: -0.25rem;
+        }
+    }
+}
+
+.alert-success {
+    color: #122f21;
+    background-color: $primary;
+    border-color: $primary;
+}
+
+.alert-info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #cff4fc;
+}
+
+.alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f8d7da;
+}
+
+.btn-success {
+    color: #fff;
+    background-color: #4caf50;
+    border-color: #4caf50;
+}
+
+[contenteditable=true] {
+    transition: all $easing-in 0.2s;
+    background-color: rgba(239, 239, 239, 0.7);
+    border-radius: 8px;
+
+    &:focus {
+        outline: 0 solid #eee;
+        background-color: rgba(245, 245, 245, 0.9);
+    }
+
+    &:hover {
+        background-color: rgba(239, 239, 239, 0.8);
+    }
+
+    .dark & {
+        background-color: rgba(239, 239, 239, 0.2);
+    }
+
+    /*
+    &::after {
+        margin-left: 5px;
+        content: "🖊️";
+        font-size: 13px;
+        color: #eee;
+    }
+    */
+
+}
+
+.action {
+    transition: all $easing-in 0.2s;
+
+    &:hover {
+        cursor: pointer;
+        transform: scale(1.2);
+    }
+}
+
+.vue-image-crop-upload .vicp-wrap {
+    border-radius: 10px !important;
+}
+
+.spinner {
+    color: $primary;
+}
+
+// Localization
+
+@import "localization.scss";

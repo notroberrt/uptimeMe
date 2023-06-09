@@ -3,6 +3,9 @@
         <div v-if="! $root.socket.connected && ! $root.socket.firstConnect" class="lost-connection">
             <div class="container-fluid">
                 {{ $root.connectionErrorMsg }}
+                <div v-if="$root.showReverseProxyGuide">
+                    Using a Reverse Proxy? <a href="https://github.com/louislam/uptime-kuma/wiki/Reverse-Proxy" target="_blank">Check how to config it for WebSocket</a>
+                </div>
             </div>
         </div>
 
@@ -10,7 +13,7 @@
         <header v-if="! $root.isMobile" class="d-flex flex-wrap justify-content-center py-3 mb-3 border-bottom">
             <router-link to="/dashboard" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
                 <object class="bi me-2 ms-4" width="40" height="40" data="/icon.svg" />
-                <span class="fs-4 title">Uptime Kuma</span>
+                <span class="fs-4 title">{{ $t("Uptime Kuma") }}</span>
             </router-link>
 
             <a v-if="hasNewVersion" target="_blank" href="https://github.com/louislam/uptime-kuma/releases" class="btn btn-info me-3">
@@ -18,13 +21,18 @@
             </a>
 
             <ul class="nav nav-pills">
-                <li class="nav-item">
+                <li v-if="$root.loggedIn" class="nav-item me-2">
+                    <router-link to="/manage-status-page" class="nav-link">
+                        <font-awesome-icon icon="stream" /> {{ $t("Status Pages") }}
+                    </router-link>
+                </li>
+                <li v-if="$root.loggedIn" class="nav-item me-2">
                     <router-link to="/dashboard" class="nav-link">
                         <font-awesome-icon icon="tachometer-alt" /> {{ $t("Dashboard") }}
                     </router-link>
                 </li>
-                <li class="nav-item">
-                    <router-link to="/settings" class="nav-link">
+                <li v-if="$root.loggedIn" class="nav-item">
+                    <router-link to="/settings" class="nav-link" :class="{ active: $route.path.includes('settings') }">
                         <font-awesome-icon icon="cog" /> {{ $t("Settings") }}
                     </router-link>
                 </li>
@@ -81,7 +89,7 @@ export default {
     },
 
     data() {
-        return {}
+        return {};
     },
 
     computed: {
@@ -105,28 +113,28 @@ export default {
     },
 
     watch: {
-        $route(to, from) {
-            this.init();
-        },
+
     },
 
     mounted() {
-        this.init();
+
     },
 
     methods: {
-        init() {
-            if (this.$route.name === "root") {
-                this.$router.push("/dashboard")
-            }
-        },
+
     },
 
-}
+};
 </script>
 
 <style lang="scss" scoped>
 @import "../assets/vars.scss";
+
+.nav-link {
+    &.status-page {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
 
 .bottom-nav {
     z-index: 1000;
@@ -152,7 +160,7 @@ export default {
         overflow: hidden;
         text-decoration: none;
 
-        &.router-link-exact-active {
+        &.router-link-exact-active, &.active {
             color: $primary;
             font-weight: bold;
         }
@@ -179,12 +187,14 @@ main {
     padding: 5px;
     background-color: crimson;
     color: white;
+    position: fixed;
+    width: 100%;
 }
 
 .dark {
     header {
-        background-color: #161b22;
-        border-bottom-color: #161b22 !important;
+        background-color: $dark-header-bg;
+        border-bottom-color: $dark-header-bg !important;
 
         span {
             color: #f0f6fc;

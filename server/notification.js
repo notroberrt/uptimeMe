@@ -5,16 +5,31 @@ const Gotify = require("./notification-providers/gotify");
 const Line = require("./notification-providers/line");
 const LunaSea = require("./notification-providers/lunasea");
 const Mattermost = require("./notification-providers/mattermost");
+const Matrix = require("./notification-providers/matrix");
 const Octopush = require("./notification-providers/octopush");
+const PromoSMS = require("./notification-providers/promosms");
+const ClickSendSMS = require("./notification-providers/clicksendsms");
 const Pushbullet = require("./notification-providers/pushbullet");
 const Pushover = require("./notification-providers/pushover");
 const Pushy = require("./notification-providers/pushy");
+const TechulusPush = require("./notification-providers/techulus-push");
 const RocketChat = require("./notification-providers/rocket-chat");
 const Signal = require("./notification-providers/signal");
 const Slack = require("./notification-providers/slack");
 const SMTP = require("./notification-providers/smtp");
+const Teams = require("./notification-providers/teams");
 const Telegram = require("./notification-providers/telegram");
 const Webhook = require("./notification-providers/webhook");
+const Feishu = require("./notification-providers/feishu");
+const AliyunSms = require("./notification-providers/aliyun-sms");
+const DingDing = require("./notification-providers/dingding");
+const Bark = require("./notification-providers/bark");
+const SerwerSMS = require("./notification-providers/serwersms");
+const Stackfield = require("./notification-providers/stackfield");
+const WeCom = require("./notification-providers/wecom");
+const GoogleChat = require("./notification-providers/google-chat");
+const Gorush = require("./notification-providers/gorush");
+const Alerta = require("./notification-providers/alerta");
 
 class Notification {
 
@@ -27,21 +42,36 @@ class Notification {
 
         const list = [
             new Apprise(),
+            new AliyunSms(),
+            new DingDing(),
             new Discord(),
+            new Teams(),
             new Gotify(),
             new Line(),
             new LunaSea(),
+            new Feishu(),
             new Mattermost(),
+            new Matrix(),
             new Octopush(),
+            new PromoSMS(),
+            new ClickSendSMS(),
             new Pushbullet(),
             new Pushover(),
             new Pushy(),
+            new TechulusPush(),
             new RocketChat(),
             new Signal(),
             new Slack(),
             new SMTP(),
             new Telegram(),
             new Webhook(),
+            new Bark(),
+            new SerwerSMS(),
+            new Stackfield(),
+            new WeCom(),
+            new GoogleChat(),
+            new Gorush(),
+            new Alerta(),
         ];
 
         for (let item of list) {

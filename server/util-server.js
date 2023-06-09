@@ -5,6 +5,18 @@ const { debug } = require("../src/util");
 const passwordHash = require("./password-hash");
 const dayjs = require("dayjs");
 const { Resolver } = require("dns");
+const child_process = require("child_process");
+const iconv = require("iconv-lite");
+const chardet = require("chardet");
+const fs = require("fs");
+const nodeJsUtil = require("util");
+
+// From ping-lite
+exports.WIN = /^win/.test(process.platform);
+exports.LIN = /^linux/.test(process.platform);
+exports.MAC = /^darwin/.test(process.platform);
+exports.FBSD = /^freebsd/.test(process.platform);
+exports.BSD = /bsd$/.test(process.platform);
 
 /**
  * Init or reset JWT secret
@@ -23,7 +35,7 @@ exports.initJWTSecret = async () => {
     jwtSecretBean.value = passwordHash.generate(dayjs() + "");
     await R.store(jwtSecretBean);
     return jwtSecretBean;
-}
+};
 
 exports.tcping = function (hostname, port) {
     return new Promise((resolve, reject) => {
@@ -44,7 +56,7 @@ exports.tcping = function (hostname, port) {
             resolve(Math.round(data.max));
         });
     });
-}
+};
 
 exports.ping = async (hostname) => {
     try {
@@ -57,7 +69,7 @@ exports.ping = async (hostname) => {
             throw e;
         }
     }
-}
+};
 
 exports.pingAsync = function (hostname, ipv6 = false) {
     return new Promise((resolve, reject) => {
@@ -69,13 +81,13 @@ exports.pingAsync = function (hostname, ipv6 = false) {
             if (err) {
                 reject(err);
             } else if (ms === null) {
-                reject(new Error(stdout))
+                reject(new Error(stdout));
             } else {
-                resolve(Math.round(ms))
+                resolve(Math.round(ms));
             }
         });
     });
-}
+};
 
 exports.dnsResolve = function (hostname, resolver_server, rrtype) {
     const resolver = new Resolver();
@@ -98,8 +110,8 @@ exports.dnsResolve = function (hostname, resolver_server, rrtype) {
                 }
             });
         }
-    })
-}
+    });
+};
 
 exports.setting = async function (key) {
     let value = await R.getCell("SELECT `value` FROM setting WHERE `key` = ? ", [
@@ -108,29 +120,30 @@ exports.setting = async function (key) {
 
     try {
         const v = JSON.parse(value);
-        debug(`Get Setting: ${key}: ${v}`)
+        debug(`Get Setting: ${key}: ${v}`);
         return v;
     } catch (e) {
         return value;
     }
-}
+};
 
-exports.setSetting = async function (key, value) {
+exports.setSetting = async function (key, value, type = null) {
     let bean = await R.findOne("setting", " `key` = ? ", [
         key,
-    ])
+    ]);
     if (!bean) {
-        bean = R.dispense("setting")
+        bean = R.dispense("setting");
         bean.key = key;
     }
+    bean.type = type;
     bean.value = JSON.stringify(value);
-    await R.store(bean)
-}
+    await R.store(bean);
+};
 
 exports.getSettings = async function (type) {
     let list = await R.getAll("SELECT `key`, `value` FROM setting WHERE `type` = ? ", [
         type,
-    ])
+    ]);
 
     let result = {};
 
@@ -143,7 +156,7 @@ exports.getSettings = async function (type) {
     }
 
     return result;
-}
+};
 
 exports.setSettings = async function (type, data) {
     let keyList = Object.keys(data);
@@ -163,12 +176,12 @@ exports.setSettings = async function (type, data) {
 
         if (bean.type === type) {
             bean.value = JSON.stringify(data[key]);
-            promiseList.push(R.store(bean))
+            promiseList.push(R.store(bean));
         }
     }
 
     await Promise.all(promiseList);
-}
+};
 
 // ssl-checker by @dyaa
 // param: res - response object from axios
@@ -185,40 +198,59 @@ const getDaysRemaining = (validFrom, validTo) => {
     return daysRemaining;
 };
 
-exports.checkCertificate = function (res) {
-    const {
-        valid_from,
-        valid_to,
-        subjectaltname,
-        issuer,
-        fingerprint,
-    } = res.request.res.socket.getPeerCertificate(false);
+// Fix certificate Info for display
+// param: info -  the chain obtained from getPeerCertificate()
+const parseCertificateInfo = function (info) {
+    let link = info;
+    let i = 0;
 
-    if (!valid_from || !valid_to || !subjectaltname) {
-        throw {
-            message: "No TLS certificate in response",
-        };
+    const existingList = {};
+
+    while (link) {
+        debug(`[${i}] ${link.fingerprint}`);
+
+        if (!link.valid_from || !link.valid_to) {
+            break;
+        }
+        link.validTo = new Date(link.valid_to);
+        link.validFor = link.subjectaltname?.replace(/DNS:|IP Address:/g, "").split(", ");
+        link.daysRemaining = getDaysRemaining(new Date(), link.validTo);
+
+        existingList[link.fingerprint] = true;
+
+        // Move up the chain until loop is encountered
+        if (link.issuerCertificate == null) {
+            break;
+        } else if (link.issuerCertificate.fingerprint in existingList) {
+            debug(`[Last] ${link.issuerCertificate.fingerprint}`);
+            link.issuerCertificate = null;
+            break;
+        } else {
+            link = link.issuerCertificate;
+        }
+
+        // Should be no use, but just in case.
+        if (i > 500) {
+            throw new Error("Dead loop occurred in parseCertificateInfo");
+        }
+        i++;
     }
 
+    return info;
+};
+
+exports.checkCertificate = function (res) {
+    const info = res.request.res.socket.getPeerCertificate(true);
     const valid = res.request.res.socket.authorized || false;
 
-    const validTo = new Date(valid_to);
-
-    const validFor = subjectaltname
-        .replace(/DNS:|IP Address:/g, "")
-        .split(", ");
-
-    const daysRemaining = getDaysRemaining(new Date(), validTo);
+    debug("Parsing Certificate Info");
+    const parsedInfo = parseCertificateInfo(info);
 
     return {
-        valid,
-        validFor,
-        validTo,
-        daysRemaining,
-        issuer,
-        fingerprint,
+        valid: valid,
+        certInfo: parsedInfo
     };
-}
+};
 
 // Check if the provided status code is within the accepted ranges
 // Param: status - the status code to check
@@ -247,7 +279,7 @@ exports.checkStatusCode = function (status, accepted_codes) {
     }
 
     return false;
-}
+};
 
 exports.getTotalClientInRoom = (io, roomName) => {
 
@@ -270,4 +302,72 @@ exports.getTotalClientInRoom = (io, roomName) => {
     } else {
         return 0;
     }
-}
+};
+
+exports.allowDevAllOrigin = (res) => {
+    if (process.env.NODE_ENV === "development") {
+        exports.allowAllOrigin(res);
+    }
+};
+
+exports.allowAllOrigin = (res) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+};
+
+exports.checkLogin = (socket) => {
+    if (! socket.userID) {
+        throw new Error("You are not logged in.");
+    }
+};
+
+exports.startUnitTest = async () => {
+    console.log("Starting unit test...");
+    const npm = /^win/.test(process.platform) ? "npm.cmd" : "npm";
+    const child = child_process.spawn(npm, ["run", "jest"]);
+
+    child.stdout.on("data", (data) => {
+        console.log(data.toString());
+    });
+
+    child.stderr.on("data", (data) => {
+        console.log(data.toString());
+    });
+
+    child.on("close", function (code) {
+        console.log("Jest exit code: " + code);
+        process.exit(code);
+    });
+};
+
+/**
+ * @param body : Buffer
+ * @returns {string}
+ */
+exports.convertToUTF8 = (body) => {
+    const guessEncoding = chardet.detect(body);
+    //debug("Guess Encoding: " + guessEncoding);
+    const str = iconv.decode(body, guessEncoding);
+    return str.toString();
+};
+
+let logFile;
+
+try {
+    logFile = fs.createWriteStream("./data/error.log", {
+        flags: "a"
+    });
+} catch (_) { }
+
+exports.errorLog = (error, outputToConsole = true) => {
+    try {
+        if (logFile) {
+            const dateTime = R.isoDateTime();
+            logFile.write(`[${dateTime}] ` + nodeJsUtil.format(error) + "\n");
+
+            if (outputToConsole) {
+                console.error(error);
+            }
+        }
+    } catch (_) { }
+};
